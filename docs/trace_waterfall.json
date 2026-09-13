@@ -1,10 +1,10 @@
 [
   {
     "step": 1,
-    "query": "Họ tên: Nguyễn Dương, sđt: 0987654321",
+    "query": "tôi mới khám về rồi, cảm ơn bạn nhé",
     "action_type": "FINAL_ANSWER",
     "thought": "Gemini phản hồi trực tiếp bằng văn bản (không cần gọi công cụ).",
-    "output": "Chào bạn Nguyễn Dương, tôi đã ghi nhận thông tin liên hệ của bạn.\n\nĐể tôi có thể hỗ trợ bạn tốt nhất, bạn vui lòng cho biết bạn đang gặp vấn đề sức khỏe gì hoặc muốn đặt lịch khám với bác sĩ/chuyên khoa nào tại cơ sở Vinmec nào không ạ?",
-    "latency_ms": 1676.51
+    "output": "Chào bạn Dương, rất vui được biết bạn đã đi khám kịp thời. Hy vọng kết quả khám của bạn tốt và sức khỏe của bạn sớm ổn định.\n\nNếu bạn cần hỗ trợ thêm về thông tin y tế hoặc các dịch vụ khác tại Vinmec trong tương lai, đừng ngần ngại liên hệ lại nhé. Chúc bạn học tập tốt và luôn giữ gìn sức khỏe!",
+    "latency_ms": 1519.08
   }
 ]

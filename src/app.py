@@ -61,7 +61,12 @@ def run_baseline_chatbot(user_query: str, provider):
     print(f"🤖 Chatbot phản hồi:\n{response}")
 
 
-def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) -> list:
+def run_react_agent(
+    user_query: str,
+    provider,
+    mcp_server: MCPAcademicServer,
+    conversation_history: list | None = None,
+) -> list:
     """
     [REACT AGENT LOOP] Thực thi vòng lặp Thought -> Action -> Observation với MCP Server
     Trả về danh sách trace log của phiên thực thi.
@@ -71,7 +76,17 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
     step = 0
     trace_logs = []
     tools_list = mcp_server.list_tools()
-    agent_prompt = user_query
+    conversation_history = conversation_history or []
+    history_text = "\n".join(
+        f"{turn['role']}: {turn['content']}"
+        for turn in conversation_history[-10:]
+    )
+    agent_prompt = (
+        f"Lịch sử hội thoại gần đây:\n{history_text}\n\n"
+        f"Tin nhắn mới của người dùng: {user_query}"
+        if history_text
+        else user_query
+    )
 
     required_fields = {
         tool["name"]: tool.get("parameters", {}).get("required", [])
@@ -229,7 +244,8 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
                 and obs_data.get("status") == "SUCCESS"
             ) or should_verify_booking:
                 agent_prompt = (
-                    f"Yêu cầu ban đầu: {user_query}\n"
+                    f"Lịch sử hội thoại:\n{history_text}\n"
+                    f"Yêu cầu hiện tại: {user_query}\n"
                     f"Observation từ {tool_name}: {json.dumps(obs_data, ensure_ascii=False)}\n"
                     "Hãy tiếp tục quy trình. Đề xuất bác sĩ tìm được và nếu người dùng đã cung cấp "
                     "đủ appointment_datetime, patient_name và phone_number thì gọi book_appointment. "
@@ -275,14 +291,31 @@ if __name__ == "__main__":
         print("   - Tra cứu lịch: 'Bác sĩ Trần Văn A chuyên khoa Tim mạch tuần này có lịch ở Vinmec Times City không?'")
         print("   - Đặt lịch khám: 'Đặt lịch với bác sĩ Nguyễn Thị B chuyên khoa Nhi tại Vinmec Central Park lúc 9:00 thứ 6.'")
         print("   - Gõ 'exit' hoặc 'quit' để kết thúc phiên trò chuyện.\n")
+        conversation_history = []
         while True:
             try:
                 user_input = input("👤 Bạn: ").strip()
                 if not user_input or user_input.lower() in ["exit", "quit"]:
                     print("👋 Tạm biệt! Kết thúc phiên trò chuyện.")
                     break
-                logs = run_react_agent(user_input, provider, mcp_server)
+                logs = run_react_agent(
+                    user_input,
+                    provider,
+                    mcp_server,
+                    conversation_history,
+                )
                 save_waterfall_trace(logs)
+                conversation_history.append({"role": "user", "content": user_input})
+                final_answers = [
+                    event["output"]
+                    for event in logs
+                    if event.get("action_type") == "FINAL_ANSWER"
+                ]
+                if final_answers:
+                    conversation_history.append({
+                        "role": "assistant",
+                        "content": final_answers[-1],
+                    })
             except (KeyboardInterrupt, EOFError):
                 print("\n👋 Đã thoát phiên tương tác.")
                 break
