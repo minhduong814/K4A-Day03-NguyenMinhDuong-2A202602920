@@ -2,36 +2,36 @@
   {
     "id": "TC01",
     "type": "direct_query",
-    "question": "Chào bạn, bạn có thể giới thiệu quy chế học vụ cơ bản của Đại học VinUni không?",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ System Prompt, không cần gọi bất kỳ Tool nào.",
+    "question": "Cho mình hỏi bệnh viện Vinmec cung cấp những dịch vụ khám chữa bệnh tổng quát nào?",
+    "expected_behavior": "Agent trả lời trực tiếp từ tri thức sẵn có (System Prompt/Static Knowledge Base) về phạm vi dịch vụ chung, không gọi bất kỳ Tool nào.",
     "complexity": "Low"
   },
   {
     "id": "TC02",
     "type": "single_tool_query",
-    "question": "Hãy tra cứu thông tin học vụ của sinh viên SV2026001.",
-    "expected_behavior": "Agent nhận diện nhu cầu tra cứu, tự động phát sinh Tool Call 'academic_query' với mã SV2026001.",
+    "question": "Tuần này Bác sĩ Trần Văn A chuyên khoa Tim mạch có lịch làm việc ở Vinmec Times City không?",
+    "expected_behavior": "Agent nhận diện ý định tra cứu lịch, trích xuất chính xác các entity (doctor_name: 'Trần Văn A', specialty: 'Tim mạch', hospital: 'Vinmec Times City') và phát sinh Tool Call 'get_doctor_schedule'.",
     "complexity": "Medium"
   },
   {
     "id": "TC03",
     "type": "appointment_booking",
-    "question": "TODO: [Học viên tự viết câu hỏi yêu cầu Agent đặt lịch hẹn tư vấn học vụ]",
-    "expected_behavior": "Agent tự động phát sinh Tool Call 'schedule_appointment' với đúng thời gian và thông tin sinh viên.",
+    "question": "Đặt cho tôi một lịch khám với Bác sĩ Nguyễn Thị B chuyên khoa Nhi tại Vinmec Central Park vào sáng thứ 6 tuần này lúc 9:00. Thông tin bệnh nhân: Lê Văn C, SĐT: 0901234567.",
+    "expected_behavior": "Agent trích xuất đầy đủ các slot bắt buộc và thực hiện gọi Tool Call 'book_appointment' thành công trong một bước mà không cần truy vấn thêm thông tin.",
     "complexity": "Medium"
   },
   {
     "id": "TC04",
     "type": "multi_step_reasoning",
-    "question": "TODO: [Học viên tự viết câu hỏi yêu cầu Agent suy luận ReAct đa bước (Tra cứu -> Đặt lịch với Cố vấn)]",
-    "expected_behavior": "Agent thực hiện chuỗi suy luận ReAct: Tra cứu cố vấn học tập của sinh viên trước, sau đó tiến hành đặt lịch hẹn.",
+    "question": "Con tôi 5 tuổi đang bị sốt cao và ho đêm. Hãy kiểm tra xem hôm nay bác sĩ Trưởng khoa Nhi nào tại Vinmec Times City có lịch trống và đặt cho tôi suất sớm nhất.",
+    "expected_behavior": "Agent thực hiện chuỗi ReAct đa bước:\n1. Thought: Cần tra cứu bác sĩ Trưởng khoa Nhi tại cơ sở chỉ định -> Call Tool 'search_doctors(specialty='Nhi', title='Trưởng khoa', hospital='Vinmec Times City')'.\n2. Observation: Nhận danh sách bác sĩ và lịch trống.\n3. Thought: Tìm ca trống sớm nhất trong ngày hôm nay -> Call Tool 'book_appointment(...)'.\n4. Final Answer: Phản hồi kết quả đặt lịch thành công cho người dùng.",
     "complexity": "High"
   },
   {
     "id": "TC05",
     "type": "edge_case_handling",
-    "question": "TODO: [Học viên tự viết câu hỏi tra cứu mã sinh viên không tồn tại (ví dụ SV9999999)]",
-    "expected_behavior": "Agent nhận kết quả NOT_FOUND từ Tool và đưa ra phản hồi lịch sự, chính xác không bịa đặt dữ liệu.",
+    "question": "Tôi muốn đặt lịch khám với Bác sĩ Phạm Quốc D chuyên khoa Thần kinh vào chiều Chủ Nhật này tại Vinmec Hải Phòng.",
+    "expected_behavior": "Agent gọi Tool 'get_doctor_schedule' và nhận kết quả NOT_FOUND hoặc NO_SLOT (do bác sĩ nghỉ hoặc không có chuyên khoa này tại cơ sở đó). Agent phản hồi lịch sự, đưa ra lý do chính xác từ kết quả Tool và gợi ý phương án thay thế (gọi bác sĩ khác cùng chuyên khoa hoặc chọn ngày khác), tuyệt đối không bịa đặt dữ liệu (Hallucination).",
     "complexity": "Medium"
   }
 ]
