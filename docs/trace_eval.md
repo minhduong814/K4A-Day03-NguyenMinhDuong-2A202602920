@@ -30,21 +30,30 @@ Dán 1 đoạn trích xuất log tiêu biểu từ file `docs/trace_waterfall.js
 [
   {
     "step": 1,
+    "query": "Đặt cho tôi một lịch khám với Bác sĩ Nguyễn Thị B chuyên khoa Nhi tại Vinmec Central Park vào sáng thứ 6 tuần này lúc 9:00. Thông tin bệnh nhân: Lê Văn C, SĐT: 0901234567.",
     "action_type": "TOOL_EXECUTION",
-    "tool_name": "academic_query",
+    "tool_name": "book_appointment",
     "arguments": {
-      "student_id": "SV2026001"
+      "doctor_name": "Nguyễn Thị B",
+      "patient_name": "Lê Văn C",
+      "specialty": "Nhi",
+      "appointment_datetime": "sáng thứ 6 tuần này lúc 9:00",
+      "hospital": "Vinmec Central Park",
+      "phone_number": "0901234567"
     },
     "observation": {
       "status": "SUCCESS",
-      "student_id": "SV2026001",
-      "data": {
-        "full_name": "Nguyễn Văn An",
-        "gpa": 3.85
-      }
+      "booking_id": "VM-4567-99",
+      "doctor_name": "Nguyễn Thị B",
+      "specialty": "Nhi",
+      "hospital": "Vinmec Central Park",
+      "appointment_datetime": "sáng thứ 6 tuần này lúc 9:00",
+      "patient_name": "Lê Văn C",
+      "phone_number": "0901234567",
+      "message": "Đặt lịch khám thành công cho bệnh nhân Lê Văn C với bác sĩ Nguyễn Thị B vào lúc sáng thứ 6 tuần này lúc 9:00."
     },
-    "latency_ms": 120.5
-  }
+    "latency_ms": 2891.49
+  },
 ]
 ```
 
@@ -53,9 +62,9 @@ Dán 1 đoạn trích xuất log tiêu biểu từ file `docs/trace_waterfall.js
 ## 3. TỔNG KẾT KẾT QUẢ NGHIỆM THU & NỘP BÀI
 
 - [ x ] Đã điền API Key thật trong `.env` và xác nhận Agent chạy mượt mà trên LLM API thật (Gemini/OpenAI).
-- **Tổng số Test Cases đã chạy thành công:** ___ / 5 test cases.
-- **Số lượt gọi Tool qua MCP Server chính xác:** ___ lượt.
-- **Kết quả đẩy Repo nộp bài:** [ ] Đã Commit và Push mã nguồn thành công lên GitHub cá nhân.
+- **Tổng số Test Cases đã chạy thành công:** 5 / 5 test cases.
+- **Số lượt gọi Tool qua MCP Server chính xác:** 3 lượt.
+- **Kết quả đẩy Repo nộp bài:** [x] Đã Commit và Push mã nguồn thành công lên GitHub cá nhân.
 
 ---
 
