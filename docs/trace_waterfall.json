@@ -1,97 +1,10 @@
 [
   {
     "step": 1,
-    "query": "Cho mình hỏi bệnh viện Vinmec cung cấp những dịch vụ khám chữa bệnh tổng quát nào?",
+    "query": "Họ tên: Nguyễn Dương, sđt: 0987654321",
     "action_type": "FINAL_ANSWER",
     "thought": "Gemini phản hồi trực tiếp bằng văn bản (không cần gọi công cụ).",
-    "output": "Chào bạn, tôi là Trợ lý Tư vấn Sức khỏe Vinmec. Hiện tại, tôi chỉ có thể hỗ trợ bạn tra cứu lịch bác sĩ và đặt lịch khám. Về thông tin các dịch vụ khám chữa bệnh tổng quát, bạn vui lòng truy cập website của Vinmec hoặc liên hệ tổng đài để được tư vấn chi tiết nhé.",
-    "latency_ms": 2969.51
-  },
-  {
-    "step": 1,
-    "query": "Tuần này Bác sĩ Trần Văn A chuyên khoa Tim mạch có lịch làm việc ở Vinmec Times City không?",
-    "action_type": "TOOL_EXECUTION",
-    "tool_name": "get_doctor_schedule",
-    "arguments": {
-      "specialty": "Tim mạch",
-      "doctor_name": "Trần Văn A",
-      "date": "Tuần này",
-      "hospital": "Vinmec Times City"
-    },
-    "observation": {
-      "status": "SUCCESS",
-      "doctor_name": "Trần Văn A",
-      "specialty": "Tim mạch",
-      "hospital": "Vinmec Times City",
-      "date": "Tuần này",
-      "data": {
-        "doctor_name": "Trần Văn A",
-        "specialty": "Tim mạch",
-        "hospital": "Vinmec Times City",
-        "working_hours": [
-          "08:00-12:00 thứ 3",
-          "13:30-17:00 thứ 6"
-        ]
-      }
-    },
-    "latency_ms": 2471.89
-  },
-  {
-    "step": 2,
-    "query": "Tuần này Bác sĩ Trần Văn A chuyên khoa Tim mạch có lịch làm việc ở Vinmec Times City không?",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Tổng hợp kết quả từ MCP Server thành công.",
-    "output": "Lịch bác sĩ Trần Văn A, chuyên khoa Tim mạch tại Vinmec Times City: 08:00-12:00 thứ 3, 13:30-17:00 thứ 6.",
-    "latency_ms": 10.0
-  },
-  {
-    "step": 1,
-    "query": "Đặt cho tôi một lịch khám với Bác sĩ Nguyễn Thị B chuyên khoa Nhi tại Vinmec Central Park vào sáng thứ 6 tuần này lúc 9:00. Thông tin bệnh nhân: Lê Văn C, SĐT: 0901234567.",
-    "action_type": "TOOL_EXECUTION",
-    "tool_name": "book_appointment",
-    "arguments": {
-      "doctor_name": "Nguyễn Thị B",
-      "patient_name": "Lê Văn C",
-      "specialty": "Nhi",
-      "appointment_datetime": "sáng thứ 6 tuần này lúc 9:00",
-      "hospital": "Vinmec Central Park",
-      "phone_number": "0901234567"
-    },
-    "observation": {
-      "status": "SUCCESS",
-      "booking_id": "VM-4567-99",
-      "doctor_name": "Nguyễn Thị B",
-      "specialty": "Nhi",
-      "hospital": "Vinmec Central Park",
-      "appointment_datetime": "sáng thứ 6 tuần này lúc 9:00",
-      "patient_name": "Lê Văn C",
-      "phone_number": "0901234567",
-      "message": "Đặt lịch khám thành công cho bệnh nhân Lê Văn C với bác sĩ Nguyễn Thị B vào lúc sáng thứ 6 tuần này lúc 9:00."
-    },
-    "latency_ms": 2891.49
-  },
-  {
-    "step": 2,
-    "query": "Đặt cho tôi một lịch khám với Bác sĩ Nguyễn Thị B chuyên khoa Nhi tại Vinmec Central Park vào sáng thứ 6 tuần này lúc 9:00. Thông tin bệnh nhân: Lê Văn C, SĐT: 0901234567.",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Tổng hợp kết quả từ MCP Server thành công.",
-    "output": "Đặt lịch khám thành công cho bệnh nhân Lê Văn C với bác sĩ Nguyễn Thị B vào lúc sáng thứ 6 tuần này lúc 9:00.",
-    "latency_ms": 10.0
-  },
-  {
-    "step": 1,
-    "query": "Con tôi 5 tuổi đang bị sốt cao và ho đêm. Hãy kiểm tra xem hôm nay bác sĩ Trưởng khoa Nhi nào tại Vinmec Times City có lịch trống và đặt cho tôi suất sớm nhất.",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Gemini phản hồi trực tiếp bằng văn bản (không cần gọi công cụ).",
-    "output": "Để tôi có thể kiểm tra lịch và đặt lịch khám cho bé, bạn vui lòng cung cấp tên cụ thể của Trưởng khoa Nhi tại Vinmec Times City được không?",
-    "latency_ms": 4315.37
-  },
-  {
-    "step": 1,
-    "query": "Tôi muốn đặt lịch khám với Bác sĩ Phạm Quốc D chuyên khoa Thần kinh vào chiều Chủ Nhật này tại Vinmec Hải Phòng.",
-    "action_type": "FINAL_ANSWER",
-    "thought": "Gemini phản hồi trực tiếp bằng văn bản (không cần gọi công cụ).",
-    "output": "Để đặt lịch khám, bạn vui lòng cho tôi biết thêm thông tin:\n1. Bạn muốn đặt lịch vào Chủ Nhật ngày nào?\n2. Tên đầy đủ của bạn là gì?\n3. Số điện thoại của bạn để Vinmec liên hệ xác nhận lịch hẹn?",
-    "latency_ms": 3465.72
+    "output": "Chào bạn Nguyễn Dương, tôi đã ghi nhận thông tin liên hệ của bạn.\n\nĐể tôi có thể hỗ trợ bạn tốt nhất, bạn vui lòng cho biết bạn đang gặp vấn đề sức khỏe gì hoặc muốn đặt lịch khám với bác sĩ/chuyên khoa nào tại cơ sở Vinmec nào không ạ?",
+    "latency_ms": 1676.51
   }
 ]

@@ -4,6 +4,7 @@ Hỗ trợ Native Tool Calling và chuyển đổi linh hoạt qua biến môi t
 """
 
 import os
+import re
 import sys
 import json
 from typing import Dict, Any, List
@@ -37,7 +38,50 @@ class MockOfflineProvider(BaseLLMProvider):
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         prompt_lower = prompt.lower()
 
+        if "observation từ search_doctors" in prompt_lower:
+            return {
+                "type": "text",
+                "content": "Tôi tìm thấy Bác sĩ Lê Minh C, Trưởng khoa Nhi tại Vinmec Times City, có lịch sớm nhất lúc 09:00 hôm nay. Bạn có muốn tôi đặt lịch không?",
+                "thought": "Đã tìm thấy bác sĩ và khung giờ phù hợp; chưa gọi book_appointment vì yêu cầu chưa có đủ thông tin bệnh nhân."
+            }
+
+        if any(keyword in prompt_lower for keyword in ["trưởng khoa", "tìm bác sĩ", "bác sĩ nào"]):
+            return {
+                "type": "tool_call",
+                "tool_name": "search_doctors",
+                "arguments": {
+                    "specialty": "Nhi",
+                    "title": "Trưởng khoa",
+                    "hospital": "Vinmec Times City",
+                    "date": "hôm nay",
+                    "preferred_datetime": "suất sớm nhất hôm nay"
+                },
+                "thought": "Người dùng muốn tìm bác sĩ theo chuyên khoa và chức danh. Tôi sẽ gọi search_doctors trước."
+            }
+
         if "đặt" in prompt_lower and "lịch" in prompt_lower:
+            has_phone_number = bool(re.search(r"(?:\+84|0)\d[\d\s.-]{8,}", prompt))
+            has_patient_name = any(
+                marker in prompt_lower
+                for marker in ["bệnh nhân", "người bệnh", "tên tôi", "tôi là"]
+            )
+            if not has_patient_name or not has_phone_number:
+                missing_fields = []
+                if not has_patient_name:
+                    missing_fields.append("patient_name")
+                if not has_phone_number:
+                    missing_fields.append("phone_number")
+                field_names = {
+                    "patient_name": "họ tên bệnh nhân",
+                    "phone_number": "số điện thoại"
+                }
+                return {
+                    "type": "text",
+                    "content": "Để tiếp tục đặt lịch, vui lòng cung cấp: " + ", ".join(
+                        field_names[field] for field in missing_fields
+                    ) + ".",
+                    "thought": "Chưa đủ thông tin bệnh nhân nên chưa gọi công cụ đặt lịch."
+                }
             return {
                 "type": "tool_call",
                 "tool_name": "book_appointment",
@@ -49,9 +93,10 @@ class MockOfflineProvider(BaseLLMProvider):
                     "patient_name": "Lê Văn C",
                     "phone_number": "0901234567"
                 },
-                "thought": "Người dùng yêu cầu đặt lịch khám. Tôi sẽ gọi tool book_appointment với thông tin lịch khám và bệnh nhân."
+                "thought": "Người dùng yêu cầu đặt lịch khám với đủ thông tin bệnh nhân. Tôi sẽ gọi book_appointment."
             }
-        elif any(keyword in prompt_lower for keyword in ["lịch", "bác sĩ", "chuyên khoa", "tra cứu"]):
+
+        if any(keyword in prompt_lower for keyword in ["lịch", "bác sĩ", "chuyên khoa", "tra cứu"]):
             return {
                 "type": "tool_call",
                 "tool_name": "get_doctor_schedule",
@@ -63,6 +108,12 @@ class MockOfflineProvider(BaseLLMProvider):
                 "thought": "Người dùng muốn tra cứu lịch bác sĩ. Tôi sẽ gọi tool get_doctor_schedule."
             }
         else:
+            if any(keyword in prompt_lower for keyword in ["sốt", "ho", "đau", "chóng mặt", "buồn nôn"]):
+                return {
+                    "type": "text",
+                    "content": "Các triệu chứng bạn mô tả có thể do nhiều nguyên nhân khác nhau và không thể kết luận chỉ từ vài dấu hiệu. Bạn nên theo dõi mức độ và thời gian xuất hiện; nếu triệu chứng nặng lên, khó thở, đau ngực, lơ mơ hoặc sốt cao kéo dài, hãy đến cơ sở y tế hoặc gọi cấp cứu. Tôi có thể giúp tìm chuyên khoa và lịch khám phù hợp.",
+                    "thought": "Đây là câu hỏi về triệu chứng; trả lời thông tin an toàn, không chẩn đoán và nêu dấu hiệu cần đi khám khẩn cấp."
+                }
             return {
                 "type": "text",
                 "content": "[Mock Agent Response]: Vinmec cung cấp dịch vụ khám và tư vấn tại nhiều cơ sở. Với lịch bác sĩ hoặc đặt lịch khám, vui lòng cung cấp bác sĩ, chuyên khoa, cơ sở và thời gian mong muốn.",

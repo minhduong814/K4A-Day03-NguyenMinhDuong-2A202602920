@@ -71,6 +71,12 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
     step = 0
     trace_logs = []
     tools_list = mcp_server.list_tools()
+    agent_prompt = user_query
+
+    required_fields = {
+        tool["name"]: tool.get("parameters", {}).get("required", [])
+        for tool in tools_list
+    }
     
     while step < MAX_ITERATIONS:
         step += 1
@@ -78,7 +84,7 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
         print(f"\n--- 🔄 Vòng lặp ReAct Loop (Step {step}/{MAX_ITERATIONS}) ---")
         
         # Gọi LLM với Native Tool Calling Specs
-        llm_response = provider.generate_with_tools(user_query, tools_list, system_prompt=REACT_AGENT_SYSTEM_PROMPT)
+        llm_response = provider.generate_with_tools(agent_prompt, tools_list, system_prompt=REACT_AGENT_SYSTEM_PROMPT)
         latency_ms = round((time.time() - step_start_time) * 1000, 2)
         
         thought = llm_response.get("thought", "Đang suy luận...")
@@ -104,6 +110,50 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
             arguments = llm_response.get("arguments", {})
             
             print(f"🛠️ [Action Proposed]: {tool_name}({arguments})")
+
+            missing_fields = [
+                field for field in required_fields.get(tool_name, [])
+                if not str(arguments.get(field, "")).strip()
+            ]
+            booking_requested = any(
+                keyword in user_query.casefold()
+                for keyword in ["đặt lịch", "đặt cho", "booking", "book"]
+            )
+            if missing_fields:
+                field_names = {
+                    "doctor_name": "tên bác sĩ",
+                    "specialty": "chuyên khoa",
+                    "hospital": "cơ sở Vinmec",
+                    "appointment_datetime": "ngày giờ khám",
+                    "patient_name": "họ tên bệnh nhân",
+                    "phone_number": "số điện thoại"
+                }
+                field_labels = ", ".join(
+                    field_names.get(field, field) for field in missing_fields
+                )
+                final_answer = (
+                    f"Để tiếp tục với yêu cầu này, vui lòng cung cấp đầy đủ thông tin: {field_labels}."
+                )
+                trace_logs.append({
+                    "step": step,
+                    "query": user_query,
+                    "action_type": "TOOL_VALIDATION",
+                    "tool_name": tool_name,
+                    "arguments": arguments,
+                    "missing_fields": missing_fields,
+                    "latency_ms": latency_ms
+                })
+                print(f"⚠️ [VALIDATION]: Thiếu field bắt buộc: {field_labels}")
+                print(f"🏁 [Final Answer]: {final_answer}")
+                trace_logs.append({
+                    "step": step + 1,
+                    "query": user_query,
+                    "action_type": "FINAL_ANSWER",
+                    "thought": "Chưa gọi tool vì còn thiếu tham số bắt buộc.",
+                    "output": final_answer,
+                    "latency_ms": 0.0
+                })
+                break
             
             # Thực thi Tool qua MCP Server
             mcp_result = mcp_server.call_tool(tool_name, arguments)
@@ -119,7 +169,24 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
                 
                 # Tổng hợp Final Answer từ kết quả Observation thực tế
                 if obs_data.get("status") == "SUCCESS":
-                    if "data" in obs_data:
+                    if tool_name == "search_doctors" and isinstance(obs_data.get("data"), list):
+                        recommended_slot = obs_data.get("recommended_slot", {})
+                        if recommended_slot:
+                            final_answer = (
+                                f"Đề xuất phù hợp nhất tại {obs_data.get('hospital', '')}: "
+                                f"{recommended_slot.get('doctor_name', '')}, "
+                                f"khám vào {recommended_slot.get('datetime', '')}. "
+                                f"Lý do: {recommended_slot.get('reason', '')}"
+                            )
+                        else:
+                            suggestions = "; ".join(
+                                f"{doctor.get('doctor_name', '')} ({', '.join(doctor.get('working_hours', []))})"
+                                for doctor in obs_data["data"]
+                            )
+                            final_answer = (
+                                f"Tôi tìm thấy các bác sĩ phù hợp tại {obs_data.get('hospital', '')}: {suggestions}."
+                            )
+                    elif "data" in obs_data and isinstance(obs_data["data"], dict):
                         d = obs_data["data"]
                         final_answer = (
                             f"Lịch bác sĩ {d.get('doctor_name', obs_data.get('doctor_name', ''))}, "
@@ -135,7 +202,10 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
                             f"Đã hoàn tất xử lý qua hệ thống Vinmec: {json.dumps(obs_data, ensure_ascii=False)}"
                         )
                 elif obs_data.get("status") == "NOT_FOUND":
-                    final_answer = obs_data.get("message", "Không tìm thấy lịch bác sĩ hoặc khung giờ phù hợp.")
+                    final_answer = (
+                        f"{obs_data.get('message', 'Không tìm thấy lịch bác sĩ hoặc khung giờ phù hợp.')} "
+                        "Bạn có thể thử chọn ngày khác, cơ sở khác hoặc tìm một bác sĩ khác cùng chuyên khoa."
+                    )
                 else:
                     final_answer = f"Phản hồi từ hệ thống Vinmec: {json.dumps(obs_data, ensure_ascii=False)}"
             
@@ -148,6 +218,24 @@ def run_react_agent(user_query: str, provider, mcp_server: MCPAcademicServer) ->
                 "observation": obs_data,
                 "latency_ms": latency_ms
             })
+
+            should_verify_booking = (
+                tool_name == "get_doctor_schedule"
+                and obs_data.get("status") == "SUCCESS"
+                and booking_requested
+            )
+            if (
+                tool_name == "search_doctors"
+                and obs_data.get("status") == "SUCCESS"
+            ) or should_verify_booking:
+                agent_prompt = (
+                    f"Yêu cầu ban đầu: {user_query}\n"
+                    f"Observation từ {tool_name}: {json.dumps(obs_data, ensure_ascii=False)}\n"
+                    "Hãy tiếp tục quy trình. Đề xuất bác sĩ tìm được và nếu người dùng đã cung cấp "
+                    "đủ appointment_datetime, patient_name và phone_number thì gọi book_appointment. "
+                    "Nếu còn thiếu field bắt buộc để đặt lịch, hãy hỏi đúng các field còn thiếu."
+                )
+                continue
             
             # Kết thúc vòng lặp sau khi hoàn tất Observation và xuất Final Answer
             print(f"🧠 [Thought]: Đã nhận được dữ liệu từ MCP Server. Tổng hợp kết quả phản hồi.")
@@ -189,7 +277,7 @@ if __name__ == "__main__":
         print("   - Gõ 'exit' hoặc 'quit' để kết thúc phiên trò chuyện.\n")
         while True:
             try:
-                user_input = input("👤 Sinh viên hỏi: ").strip()
+                user_input = input("👤 Bạn: ").strip()
                 if not user_input or user_input.lower() in ["exit", "quit"]:
                     print("👋 Tạm biệt! Kết thúc phiên trò chuyện.")
                     break
