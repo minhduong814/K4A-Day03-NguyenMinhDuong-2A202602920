@@ -36,27 +36,37 @@ class MockOfflineProvider(BaseLLMProvider):
 
     def generate_with_tools(self, prompt: str, tools_schema: List[Dict[str, Any]], system_prompt: str = "") -> Dict[str, Any]:
         prompt_lower = prompt.lower()
-        
-        # Mô phỏng nhận diện intent gọi Tool
-        if "sv2026001" in prompt_lower and "đặt lịch" in prompt_lower:
+
+        if "đặt" in prompt_lower and "lịch" in prompt_lower:
             return {
                 "type": "tool_call",
-                "tool_name": "schedule_appointment",
-                "arguments": {"student_id": "SV2026001", "datetime_str": "14:00 15/09/2026", "advisor_name": "PGS.TS Nguyễn Văn A"},
-                "thought": "Người dùng yêu cầu đặt lịch hẹn tư vấn cho sinh viên SV2026001. Tôi sẽ gọi tool schedule_appointment."
+                "tool_name": "book_appointment",
+                "arguments": {
+                    "doctor_name": "Nguyễn Thị B",
+                    "specialty": "Nhi",
+                    "hospital": "Vinmec Central Park",
+                    "appointment_datetime": "09:00 thứ 6, 18/09/2026",
+                    "patient_name": "Lê Văn C",
+                    "phone_number": "0901234567"
+                },
+                "thought": "Người dùng yêu cầu đặt lịch khám. Tôi sẽ gọi tool book_appointment với thông tin lịch khám và bệnh nhân."
             }
-        elif "sv2026001" in prompt_lower or "tra cứu" in prompt_lower:
+        elif any(keyword in prompt_lower for keyword in ["lịch", "bác sĩ", "chuyên khoa", "tra cứu"]):
             return {
                 "type": "tool_call",
-                "tool_name": "academic_query",
-                "arguments": {"student_id": "SV2026001"},
-                "thought": "Người dùng muốn tra cứu thông tin học vụ của sinh viên SV2026001. Tôi sẽ gọi tool academic_query."
+                "tool_name": "get_doctor_schedule",
+                "arguments": {
+                    "doctor_name": "Trần Văn A",
+                    "specialty": "Tim mạch",
+                    "hospital": "Vinmec Times City"
+                },
+                "thought": "Người dùng muốn tra cứu lịch bác sĩ. Tôi sẽ gọi tool get_doctor_schedule."
             }
         else:
             return {
                 "type": "text",
-                "content": f"[Mock Agent Response]: Xin chào! Quy chế học vụ VinUni yêu cầu sinh viên tích lũy tối thiểu 120 tín chỉ và duy trì GPA trên 2.0 để tốt nghiệp.",
-                "thought": "Câu hỏi chung về quy chế học vụ, trả lời trực tiếp không cần gọi Tool."
+                "content": "[Mock Agent Response]: Vinmec cung cấp dịch vụ khám và tư vấn tại nhiều cơ sở. Với lịch bác sĩ hoặc đặt lịch khám, vui lòng cung cấp bác sĩ, chuyên khoa, cơ sở và thời gian mong muốn.",
+                "thought": "Câu hỏi chung về dịch vụ y tế, trả lời trực tiếp không cần gọi Tool."
             }
 
 
